@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 210 22% 22%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 22% 22%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 22% 22%;
+    --primary: 207 79% 29%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 207 79% 29%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 151 100% 33%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 207 79% 29%;
+    --radius: 0.5rem;
+    --chart-1: 207 79% 29%;
+    --chart-2: 151 100% 33%;
+    --chart-3: 180 100% 35%;
+    --chart-4: 25 100% 50%;
+    --chart-5: 210 22% 22%;
+
+    --sidebar-background: 207 79% 29%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 207 79% 29%;
+    --sidebar-accent: 207 69% 35%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 207 69% 35%;
+    --sidebar-ring: 151 100% 33%;
+
+    /* Bayer-inspired custom properties */
+    --bayer-blue: 207 79% 29%;
+    --bayer-green: 151 100% 33%;
+    --bayer-teal: 180 100% 35%;
+    --bayer-orange: 25 100% 50%;
+    --bayer-light-gray: 210 20% 96%;
+    --bayer-dark-gray: 210 22% 22%;
+  }
+
+  .dark {
+    --background: 207 79% 15%;
+    --foreground: 0 0% 98%;
+    --card: 207 79% 15%;
+    --card-foreground: 0 0% 98%;
+    --popover: 207 79% 15%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 207 79% 29%;
+    --secondary: 207 69% 20%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 207 69% 20%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 151 100% 40%;
+    --accent-foreground: 207 79% 15%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 207 69% 20%;
+    --input: 207 69% 20%;
+    --ring: 151 100% 40%;
+
+    --sidebar-background: 207 79% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 207 79% 10%;
+    --sidebar-accent: 207 69% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 207 69% 15%;
+    --sidebar-ring: 151 100% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Bayer-inspired utility classes */
+.bayer-gradient {
+  background: linear-gradient(135deg, hsl(var(--bayer-blue)) 0%, hsl(var(--bayer-green)) 100%);
+}
+
+.bayer-blue-gradient {
+  background: linear-gradient(135deg, hsl(var(--bayer-blue)) 0%, hsl(207 69% 35%) 100%);
+}
+
+.bayer-green-gradient {
+  background: linear-gradient(135deg, hsl(var(--bayer-green)) 0%, hsl(151 80% 40%) 100%);
+}
+
+.bayer-card {
+  @apply bg-white/25 backdrop-blur-lg border border-blue-200/30 shadow-xl;
+}
+
+.bayer-input {
+  @apply bg-white/15 backdrop-blur-sm border border-blue-200/40 placeholder:text-blue-700/70;
+}
+
+/* Loading animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+/* Custom scrollbar with Bayer colors */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--bayer-light-gray));
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--bayer-blue));
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(207 69% 35%);
+}
