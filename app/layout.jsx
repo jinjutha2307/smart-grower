@@ -3,6 +3,7 @@ import "./globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sprout } from "lucide-react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +25,7 @@ export default function RootLayout({ children }) {
                 <SidebarTrigger className="text-white hover:bg-white/20" />
                 <div className="flex items-center gap-2 text-white">
                   <div className="h-8 w-8 rounded-lg bayer-green-gradient flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-sm">A</span>
+                    <Sprout className="h-6 w-6 text-white" />
                   </div>
                   <span className="font-semibold">Smart Grower</span>
                 </div>

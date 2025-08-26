@@ -1,23 +1,56 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, Save, Download, User, Camera, AlertCircle, CheckCircle } from 'lucide-react'
-import { Badge } from "@/components/ui/badge"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { FormField } from "@/components/ui/form-field"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Upload,
+  Save,
+  Download,
+  User,
+  Camera,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { FormField } from "@/components/ui/form-field";
+
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { set } from "date-fns";
+import { se } from "date-fns/locale";
+import FormFieldComponent from "@/components/common/form/form-field-component";
+import AddressForm from "@/components/common/form/address-form";
 
 export default function GrowerRegisterPage() {
   const [formData, setFormData] = useState({
     growerId: "",
     citizenId: "",
-    firstName: "",
-    lastName: "",
+    firstNameTH: "",
+    firstNameEN: "",
+    lastNameTH: "",
+    lastNameEN: "",
+    gender: "",
+    citizenIdIssueDate: "",
+    citizenIdExpiryDate: "",
+    citizenBirthDate: "",
+    age: "0",
     phone: "",
     email: "",
     address: "",
@@ -25,101 +58,131 @@ export default function GrowerRegisterPage() {
     district: "",
     subdistrict: "",
     postalCode: "",
-    farmSize: "",
-    cropType: "",
-    experience: "",
-    photo: null
-  })
+    photo: null,
+  });
 
-  const [photoPreview, setPhotoPreview] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState({})
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }))
+    if (field === "citizenBirthDate" && value != "") {
+      setFormData((prev) => ({ ...prev, age: ageCalcuate(value) }));
     }
-  }
+
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (errors[field]) {
+      // Clear error when user starts typing
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
 
   const handlePhotoUpload = (event) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
     if (file) {
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, photo: "File size must be less than 5MB" }))
-        return
+      // Validate file size (100KB limit)
+      if (file.size > 100 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          photo: "File size must be less than 100KB",
+        }));
+
+        return;
       }
 
       // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({ ...prev, photo: "Please select a valid image file" }))
-        return
+      if (
+        !file.type.startsWith("image/webp") &&
+        !file.type.startsWith("image/jpeg") &&
+        !file.type.startsWith("image/png")
+      ) {
+        setErrors((prev) => ({
+          ...prev,
+          photo: "Please select a valid image file",
+        }));
+
+        return;
       }
 
-      setFormData(prev => ({ ...prev, photo: file }))
-      setErrors(prev => ({ ...prev, photo: "" }))
-      
-      const reader = new FileReader()
+      setFormData((prev) => ({ ...prev, photo: file }));
+      setErrors((prev) => ({ ...prev, photo: "" }));
+
+      const reader = new FileReader();
       reader.onload = (e) => {
-        setPhotoPreview(e.target?.result)
-      }
-      reader.readAsDataURL(file)
+        setPhotoPreview(e.target?.result);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors = {}
+    const newErrors = {};
 
-    if (!formData.growerId.trim()) newErrors.growerId = "Grower ID is required"
-    if (!formData.citizenId.trim()) newErrors.citizenId = "Citizen ID is required"
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required"
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required"
-    
-    // Validate citizen ID format (basic validation)
-    if (formData.citizenId && !/^\d{1}-\d{4}-\d{5}-\d{2}-\d{1}$/.test(formData.citizenId)) {
-      newErrors.citizenId = "Invalid citizen ID format (1-2345-67890-12-3)"
-    }
+    formData.map((field) => {
+      if (field === "citizenId" || field === "email" || field === "phone") {
+        // Validate citizen ID format (basic validation)
+        if (
+          formData.citizenId &&
+          !/^\d{1}-\d{4}-\d{5}-\d{2}-\d{1}$/.test(formData.citizenId)
+        ) {
+          newErrors.citizenId = "Invalid citizen ID format (1-2345-67890-12-3)";
+        }
 
-    // Validate email format
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Invalid email format"
-    }
+        // Validate email format
+        if (
+          formData.email &&
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+        ) {
+          newErrors.email = "Invalid email format";
+        }
 
-    // Validate phone format
-    if (formData.phone && !/^0\d{1}-\d{4}-\d{4}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone format (08-1234-5678)"
-    }
+        // Validate phone format
+        if (formData.phone && !/^0\d{1}-\d{4}-\d{4}$/.test(formData.phone)) {
+          newErrors.phone = "Invalid phone format (08-1234-5678)";
+        }
+      } else {
+        if (!formData[field].trim()) newErrors[field] = `${field} is required`;
+      }
+    });
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
-    
+    setIsLoading(true);
+
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      console.log("Form submitted:", formData)
-      setIsSubmitted(true)
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      console.log("Form submitted:", formData);
+      setIsSubmitted(true);
+
       // Reset form after successful submission
       setTimeout(() => {
         setFormData({
           growerId: "",
           citizenId: "",
-          firstName: "",
-          lastName: "",
+          firstNameTH: "",
+          firstNameEN: "",
+          lastNameTH: "",
+          lastNameEN: "",
+          addressTH: "",
+          addressEN: "",
+          gender: "",
+          citizenIdIssueDate: "",
+          citizenIdExpiryDate: "",
+          citizenBirthDate: "",
+          age: "0",
           phone: "",
           email: "",
           address: "",
@@ -130,30 +193,30 @@ export default function GrowerRegisterPage() {
           farmSize: "",
           cropType: "",
           experience: "",
-          photo: null
-        })
-        setPhotoPreview(null)
-        setIsSubmitted(false)
-      }, 3000)
-      
+          photo: null,
+        });
+        setPhotoPreview(null);
+        setIsSubmitted(false);
+      }, 3000);
     } catch (error) {
-      console.error("Submission error:", error)
-      setErrors({ submit: "Failed to register grower. Please try again." })
+      console.error("Submission error:", error);
+      setErrors({ submit: "Failed to register grower. Please try again." });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleExportExcel = () => {
     // Simulate Excel export
-    console.log("Exporting to Excel...")
+    console.log("Exporting to Excel...");
     // In a real app, you would generate and download an Excel file
-    const link = document.createElement('a')
-    link.href = 'data:text/csv;charset=utf-8,Grower ID,Name,Citizen ID,Phone,Email\n' + 
-                `${formData.growerId},"${formData.firstName} ${formData.lastName}",${formData.citizenId},${formData.phone},${formData.email}`
-    link.download = 'grower_data.csv'
-    link.click()
-  }
+    const link = document.createElement("a");
+    link.href =
+      "data:text/csv;charset=utf-8,Grower ID,Name,Citizen ID,Phone,Email\n" +
+      `${formData.growerId},"${formData.firstName} ${formData.lastName}",${formData.citizenId},${formData.phone},${formData.email}`;
+    link.download = "grower_data.csv";
+    link.click();
+  };
 
   if (isSubmitted) {
     return (
@@ -171,13 +234,124 @@ export default function GrowerRegisterPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
+
+  const ageCalcuate = (birthDate) => {
+    const birthYear = new Date(birthDate).getFullYear();
+
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - birthYear;
+
+    if (isNaN(age) || age < 0) {
+      return "0";
+    }
+    return age;
+  };
+
+  const personalDataFields = [
+    {
+      label: "รหัสเกษตรกร (Grower ID)",
+      field: "growerId",
+      placeholder: "GR001",
+    },
+    {
+      label: "เลขบัตรประชาชน (Citizen ID)",
+      field: "citizenId",
+      placeholder: "1-2345-67890-12-3",
+    },
+    { label: "ชื่อ", field: "firstNameTH", placeholder: "สมชาย" },
+    { label: "First Name", field: "firstNameEN", placeholder: "Somchai" },
+    { label: "นามสกุล", field: "lastNameTH", placeholder: "ใจดี" },
+    { label: "Last Name", field: "lastNameEN", placeholder: "Jaidee" },
+    {
+      label: "เพศ",
+      field: "gender",
+      child: (
+        <RadioGroup
+          className="flex items-center space-x-3 "
+          defaultValue={formData["gender"]}
+          onValueChange={(value) => handleInputChange("gender", value)}
+        >
+          <div className="flex items-center space-x-1 cursor-pointer">
+            <RadioGroupItem value="ชาย" id="male" />
+            <Label htmlFor="male">ชาย</Label>
+          </div>
+          <div className="flex items-center space-x-1 cursor-pointer">
+            <RadioGroupItem value="หญิง" id="female" />
+            <Label htmlFor="female">หญิง</Label>
+          </div>
+          <div className="flex items-center space-x-1 cursor-pointer">
+            <RadioGroupItem value="อื่นๆ" id="others" />
+            <Label htmlFor="others">อื่นๆ</Label>
+          </div>
+        </RadioGroup>
+      ),
+    },
+    {
+      label: "วัน/เดือน/ปีเกิด (Citizen Birth Date)",
+      field: "citizenBirthDate",
+      child: (
+        <Input
+          type="date"
+          value={formData.citizenBirthDate}
+          onChange={(e) =>
+            handleInputChange("citizenBirthDate", e.target.value)
+          }
+          className="bayer-input"
+        />
+      ),
+    },
+    {
+      label: "อายุ (Age)",
+      field: "age",
+      child: <div className="text- text-black md:text-sm">{formData.age}</div>,
+    },
+    {
+      label: "วันออกบัตรประชาชน (Citizen ID Issue Date)",
+      field: "citizenIdIssueDate",
+      child: (
+        <Input
+          type="date"
+          value={formData.citizenIdIssueDate}
+          onChange={(e) =>
+            handleInputChange("citizenIdIssueDate", e.target.value)
+          }
+          className="bayer-input"
+        />
+      ),
+    },
+    {
+      label: "วันหมดอายุบัตรประชาชน (Citizen ID Expiry Date)",
+      field: "citizenIdExpiryDate",
+      child: (
+        <Input
+          type="date"
+          value={formData.citizenIdExpiryDate}
+          onChange={(e) =>
+            handleInputChange("citizenIdExpiryDate", e.target.value)
+          }
+          className="bayer-input"
+        />
+      ),
+    },
+
+    {
+      label: "เบอร์โทรศัพท์ (Phone)",
+      field: "phone",
+      placeholder: "08-1234-5678",
+    },
+    {
+      label: "อีเมล (Email)",
+      field: "email",
+      placeholder: "somchai@example.com",
+    },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bayer-card rounded-2xl p-6">
+      <div className="bayer-card rounded-2xl p-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-blue-900 mb-2">
@@ -187,7 +361,10 @@ export default function GrowerRegisterPage() {
               กรอกข้อมูลเกษตรกรเพื่อเพิ่มเข้าสู่ระบบ
             </p>
           </div>
-          <Badge variant="outline" className="bg-green-50 text-green-800 border-green-300">
+          <Badge
+            variant="outline"
+            className="bg-green-50 text-green-800 border-green-300"
+          >
             <User className="h-4 w-4 mr-1" />
             New Registration
           </Badge>
@@ -198,7 +375,9 @@ export default function GrowerRegisterPage() {
         {/* Photo Upload Section */}
         <Card className="bayer-card border-white/30">
           <CardHeader>
-            <CardTitle className="text-blue-900">รูปเกษตรกร (Grower Photo)</CardTitle>
+            <CardTitle className="text-blue-900">
+              รูปเกษตรกร (Grower Photo)
+            </CardTitle>
             <CardDescription>อัพโหลดรูปถ่ายของเกษตรกร</CardDescription>
           </CardHeader>
           <CardContent>
@@ -206,9 +385,9 @@ export default function GrowerRegisterPage() {
               <div className="relative">
                 <div className="h-32 w-32 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-green-400 transition-colors">
                   {photoPreview ? (
-                    <img 
-                      src={photoPreview || "/placeholder.svg"} 
-                      alt="Grower photo" 
+                    <img
+                      src={photoPreview || "/placeholder.svg"}
+                      alt="Grower photo"
                       className="h-full w-full object-cover"
                     />
                   ) : (
@@ -224,11 +403,17 @@ export default function GrowerRegisterPage() {
               </div>
               <div className="text-center sm:text-left">
                 <Button type="button" variant="outline" className="mb-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
                   <Upload className="h-4 w-4 mr-2" />
                   เลือกรูปภาพ
                 </Button>
                 <p className="text-sm text-gray-600">
-                  รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB
+                  รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 100KB
                 </p>
                 {errors.photo && (
                   <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
@@ -244,63 +429,19 @@ export default function GrowerRegisterPage() {
         {/* Personal Information */}
         <Card className="bayer-card border-white/30">
           <CardHeader>
-            <CardTitle className="text-blue-900">ข้อมูลส่วนตัว (Personal Information)</CardTitle>
+            <CardTitle className="text-blue-900">
+              ข้อมูลส่วนตัว (Personal Information)
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="รหัสเกษตรกร (Grower ID)" required error={errors.growerId}>
-              <Input
-                value={formData.growerId}
-                onChange={(e) => handleInputChange('growerId', e.target.value)}
-                placeholder="GR001"
-                className="bayer-input"
+            {personalDataFields.map((item) => (
+              <FormFieldComponent
+                item={item}
+                errors={errors}
+                formData={formData}
+                handleInputChange={handleInputChange}
               />
-            </FormField>
-
-            <FormField label="เลขบัตรประชาชน (Citizen ID)" required error={errors.citizenId}>
-              <Input
-                value={formData.citizenId}
-                onChange={(e) => handleInputChange('citizenId', e.target.value)}
-                placeholder="1-2345-67890-12-3"
-                className="bayer-input"
-              />
-            </FormField>
-
-            <FormField label="ชื่อ (First Name)" required error={errors.firstName}>
-              <Input
-                value={formData.firstName}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
-                placeholder="สมชาย"
-                className="bayer-input"
-              />
-            </FormField>
-
-            <FormField label="นามสกุล (Last Name)" required error={errors.lastName}>
-              <Input
-                value={formData.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
-                placeholder="ใจดี"
-                className="bayer-input"
-              />
-            </FormField>
-
-            <FormField label="เบอร์โทรศัพท์ (Phone)" error={errors.phone}>
-              <Input
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="08-1234-5678"
-                className="bayer-input"
-              />
-            </FormField>
-
-            <FormField label="อีเมล (Email)" error={errors.email}>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="somchai@example.com"
-                className="bayer-input"
-              />
-            </FormField>
+            ))}
           </CardContent>
         </Card>
 
@@ -310,80 +451,35 @@ export default function GrowerRegisterPage() {
             <CardTitle className="text-blue-900">ที่อยู่ (Address)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField label="ที่อยู่ (Address)">
-              <Textarea
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="123 หมู่ 1 ตำบล..."
-                className="bayer-input"
-                rows={3}
-              />
-            </FormField>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <FormField label="จังหวัด (Province)">
-                <Select onValueChange={(value) => handleInputChange('province', value)}>
-                  <SelectTrigger className="bayer-input">
-                    <SelectValue placeholder="เลือกจังหวัด" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bangkok">กรุงเทพมหานคร</SelectItem>
-                    <SelectItem value="chiangmai">เชียงใหม่</SelectItem>
-                    <SelectItem value="khonkaen">ขอนแก่น</SelectItem>
-                    <SelectItem value="nakhonratchasima">นครราชสีมา</SelectItem>
-                    <SelectItem value="chonburi">ชลบุรี</SelectItem>
-                    <SelectItem value="rayong">ระยอง</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormField>
-
-              <FormField label="อำเภอ (District)">
-                <Input
-                  value={formData.district}
-                  onChange={(e) => handleInputChange('district', e.target.value)}
-                  placeholder="เมือง"
-                  className="bayer-input"
-                />
-              </FormField>
-
-              <FormField label="ตำบล (Subdistrict)">
-                <Input
-                  value={formData.subdistrict}
-                  onChange={(e) => handleInputChange('subdistrict', e.target.value)}
-                  placeholder="ในเมือง"
-                  className="bayer-input"
-                />
-              </FormField>
-
-              <FormField label="รหัสไปรษณีย์ (Postal Code)">
-                <Input
-                  value={formData.postalCode}
-                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                  placeholder="10100"
-                  className="bayer-input"
-                />
-              </FormField>
-            </div>
+            <AddressForm
+              errors={errors}
+              formData={formData}
+              handleInputChange={handleInputChange}
+            />
           </CardContent>
         </Card>
 
         {/* Farm Information */}
         <Card className="bayer-card border-white/30">
           <CardHeader>
-            <CardTitle className="text-blue-900">ข้อมูลการเกษตร (Farm Information)</CardTitle>
+            <CardTitle className="text-blue-900">
+              ข้อมูลการเกษตร (Farm Information)
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField label="ขนาดพื้นที่เกษตร (Farm Size)">
               <Input
                 value={formData.farmSize}
-                onChange={(e) => handleInputChange('farmSize', e.target.value)}
+                onChange={(e) => handleInputChange("farmSize", e.target.value)}
                 placeholder="10 ไร่"
                 className="bayer-input"
               />
             </FormField>
 
             <FormField label="ประเภทพืชที่ปลูก (Crop Type)">
-              <Select onValueChange={(value) => handleInputChange('cropType', value)}>
+              <Select
+                onValueChange={(value) => handleInputChange("cropType", value)}
+              >
                 <SelectTrigger className="bayer-input">
                   <SelectValue placeholder="เลือกประเภทพืช" />
                 </SelectTrigger>
@@ -403,7 +499,9 @@ export default function GrowerRegisterPage() {
             <FormField label="ประสบการณ์ (Years of Experience)">
               <Input
                 value={formData.experience}
-                onChange={(e) => handleInputChange('experience', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("experience", e.target.value)
+                }
                 placeholder="5 ปี"
                 className="bayer-input"
               />
@@ -455,5 +553,5 @@ export default function GrowerRegisterPage() {
         </div>
       </form>
     </div>
-  )
+  );
 }
