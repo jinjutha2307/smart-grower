@@ -42,9 +42,7 @@ export default function GrowerRegisterPage() {
   const [formData, setFormData] = useState({
     growerId: "",
     citizenId: "",
-    firstNameTH: "",
     firstNameEN: "",
-    lastNameTH: "",
     lastNameEN: "",
     gender: "",
     citizenIdIssueDate: "",
@@ -53,11 +51,9 @@ export default function GrowerRegisterPage() {
     age: "0",
     phone: "",
     email: "",
-    address: "",
-    province: "",
-    district: "",
-    subdistrict: "",
-    postalCode: "",
+    state: "",
+    city: "",
+    zipcode: "",
     photo: null,
   });
 
@@ -120,30 +116,43 @@ export default function GrowerRegisterPage() {
   const validateForm = () => {
     const newErrors = {};
 
-    formData.map((field) => {
+    Object.keys(formData).forEach((field) => {
       if (field === "citizenId" || field === "email" || field === "phone") {
-        // Validate citizen ID format (basic validation)
-        if (
-          formData.citizenId &&
-          !/^\d{1}-\d{4}-\d{5}-\d{2}-\d{1}$/.test(formData.citizenId)
-        ) {
-          newErrors.citizenId = "Invalid citizen ID format (1-2345-67890-12-3)";
+        // Validate thai citizen ID format
+        if (field === "citizenId") {
+          if (formData.citizenId.length > 13) {
+            newErrors.citizenId = "Citizen ID must be 13 digits";
+          } else if (
+            formData.citizenId &&
+            !/^\d{13}$/.test(formData.citizenId)
+          ) {
+            newErrors.citizenId =
+              "Invalid citizen ID format (1-2345-67890-12-3)";
+          }
         }
 
         // Validate email format
-        if (
-          formData.email &&
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-        ) {
-          newErrors.email = "Invalid email format";
+        if (field === "email") {
+          if (
+            formData.email &&
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+          ) {
+            newErrors.email = "Invalid email format";
+          }
         }
 
         // Validate phone format
-        if (formData.phone && !/^0\d{1}-\d{4}-\d{4}$/.test(formData.phone)) {
-          newErrors.phone = "Invalid phone format (08-1234-5678)";
+        if (field === "phone") {
+          if (formData.phone.length > 10) {
+            newErrors.phone = "Phone number must be 10 digits";
+          } else if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
+            newErrors.phone = "Invalid phone format (123-456-7890)";
+          }
         }
       } else {
-        if (!formData[field].trim()) newErrors[field] = `${field} is required`;
+        if (typeof formData[field] === "string" && !formData[field].trim()) {
+          newErrors[field] = `${field} is required`;
+        }
       }
     });
 
@@ -172,9 +181,7 @@ export default function GrowerRegisterPage() {
         setFormData({
           growerId: "",
           citizenId: "",
-          firstNameTH: "",
           firstNameEN: "",
-          lastNameTH: "",
           lastNameEN: "",
           addressTH: "",
           addressEN: "",
@@ -186,13 +193,9 @@ export default function GrowerRegisterPage() {
           phone: "",
           email: "",
           address: "",
-          province: "",
-          district: "",
-          subdistrict: "",
-          postalCode: "",
-          farmSize: "",
-          cropType: "",
-          experience: "",
+          city: "",
+          state: "",
+          zipCode: "",
           photo: null,
         });
         setPhotoPreview(null);
@@ -225,9 +228,7 @@ export default function GrowerRegisterPage() {
           <CardContent className="p-8 text-center">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-green-800 mb-2">Success!</h2>
-            <p className="text-green-600 mb-4">
-              เกษตรกรได้รับการลงทะเบียนเรียบร้อยแล้ว!
-            </p>
+            <p className="text-green-600 mb-4">Register Successfully!</p>
             <p className="text-sm text-gray-600">
               Redirecting to form in a few seconds...
             </p>
@@ -251,21 +252,19 @@ export default function GrowerRegisterPage() {
 
   const personalDataFields = [
     {
-      label: "รหัสเกษตรกร (Grower ID)",
+      label: "Grower ID",
       field: "growerId",
       placeholder: "GR001",
     },
     {
-      label: "เลขบัตรประชาชน (Citizen ID)",
+      label: "Citizen ID",
       field: "citizenId",
       placeholder: "1-2345-67890-12-3",
     },
-    { label: "ชื่อ", field: "firstNameTH", placeholder: "สมชาย" },
-    { label: "First Name", field: "firstNameEN", placeholder: "Somchai" },
-    { label: "นามสกุล", field: "lastNameTH", placeholder: "ใจดี" },
-    { label: "Last Name", field: "lastNameEN", placeholder: "Jaidee" },
+    { label: "First Name", field: "firstNameEN", placeholder: "Jane" },
+    { label: "Last Name", field: "lastNameEN", placeholder: "Smith" },
     {
-      label: "เพศ",
+      label: "Gender",
       field: "gender",
       child: (
         <RadioGroup
@@ -274,22 +273,22 @@ export default function GrowerRegisterPage() {
           onValueChange={(value) => handleInputChange("gender", value)}
         >
           <div className="flex items-center space-x-1 cursor-pointer">
-            <RadioGroupItem value="ชาย" id="male" />
-            <Label htmlFor="male">ชาย</Label>
+            <RadioGroupItem value="male" id="male" />
+            <Label htmlFor="male">Male</Label>
           </div>
           <div className="flex items-center space-x-1 cursor-pointer">
-            <RadioGroupItem value="หญิง" id="female" />
-            <Label htmlFor="female">หญิง</Label>
+            <RadioGroupItem value="Female" id="female" />
+            <Label htmlFor="female">Female</Label>
           </div>
           <div className="flex items-center space-x-1 cursor-pointer">
-            <RadioGroupItem value="อื่นๆ" id="others" />
-            <Label htmlFor="others">อื่นๆ</Label>
+            <RadioGroupItem value="others" id="others" />
+            <Label htmlFor="others">Others</Label>
           </div>
         </RadioGroup>
       ),
     },
     {
-      label: "วัน/เดือน/ปีเกิด (Citizen Birth Date)",
+      label: "Citizen Birth Date",
       field: "citizenBirthDate",
       child: (
         <Input
@@ -303,12 +302,12 @@ export default function GrowerRegisterPage() {
       ),
     },
     {
-      label: "อายุ (Age)",
+      label: "Age",
       field: "age",
       child: <div className="text- text-black md:text-sm">{formData.age}</div>,
     },
     {
-      label: "วันออกบัตรประชาชน (Citizen ID Issue Date)",
+      label: "Citizen ID Issue Date",
       field: "citizenIdIssueDate",
       child: (
         <Input
@@ -322,7 +321,7 @@ export default function GrowerRegisterPage() {
       ),
     },
     {
-      label: "วันหมดอายุบัตรประชาชน (Citizen ID Expiry Date)",
+      label: "Citizen ID Expiry Date",
       field: "citizenIdExpiryDate",
       child: (
         <Input
@@ -335,16 +334,15 @@ export default function GrowerRegisterPage() {
         />
       ),
     },
-
     {
-      label: "เบอร์โทรศัพท์ (Phone)",
+      label: "Phone",
       field: "phone",
-      placeholder: "08-1234-5678",
+      placeholder: "xxx-xxx-xxxx",
     },
     {
-      label: "อีเมล (Email)",
+      label: "Email",
       field: "email",
-      placeholder: "somchai@example.com",
+      placeholder: "jennie@example.com",
     },
   ];
 
@@ -355,10 +353,10 @@ export default function GrowerRegisterPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-blue-900 mb-2">
-              ลงทะเบียนเกษตรกร (Grower Registration)
+              Grower Registration
             </h1>
             <p className="text-blue-700">
-              กรอกข้อมูลเกษตรกรเพื่อเพิ่มเข้าสู่ระบบ
+              Complete farmer details for system entry
             </p>
           </div>
           <Badge
@@ -375,10 +373,8 @@ export default function GrowerRegisterPage() {
         {/* Photo Upload Section */}
         <Card className="bayer-card border-white/30">
           <CardHeader>
-            <CardTitle className="text-blue-900">
-              รูปเกษตรกร (Grower Photo)
-            </CardTitle>
-            <CardDescription>อัพโหลดรูปถ่ายของเกษตรกร</CardDescription>
+            <CardTitle className="text-blue-900">Grower Photo</CardTitle>
+            <CardDescription>Upload photo</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -410,10 +406,10 @@ export default function GrowerRegisterPage() {
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                   <Upload className="h-4 w-4 mr-2" />
-                  เลือกรูปภาพ
+                  Upload Photo
                 </Button>
                 <p className="text-sm text-gray-600">
-                  รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 100KB
+                  Supports JPG, PNG files up to 100KB
                 </p>
                 {errors.photo && (
                   <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
@@ -430,7 +426,7 @@ export default function GrowerRegisterPage() {
         <Card className="bayer-card border-white/30">
           <CardHeader>
             <CardTitle className="text-blue-900">
-              ข้อมูลส่วนตัว (Personal Information)
+              Personal Information
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -456,56 +452,6 @@ export default function GrowerRegisterPage() {
               formData={formData}
               handleInputChange={handleInputChange}
             />
-          </CardContent>
-        </Card>
-
-        {/* Farm Information */}
-        <Card className="bayer-card border-white/30">
-          <CardHeader>
-            <CardTitle className="text-blue-900">
-              ข้อมูลการเกษตร (Farm Information)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField label="ขนาดพื้นที่เกษตร (Farm Size)">
-              <Input
-                value={formData.farmSize}
-                onChange={(e) => handleInputChange("farmSize", e.target.value)}
-                placeholder="10 ไร่"
-                className="bayer-input"
-              />
-            </FormField>
-
-            <FormField label="ประเภทพืชที่ปลูก (Crop Type)">
-              <Select
-                onValueChange={(value) => handleInputChange("cropType", value)}
-              >
-                <SelectTrigger className="bayer-input">
-                  <SelectValue placeholder="เลือกประเภทพืช" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rice">ข้าว</SelectItem>
-                  <SelectItem value="corn">ข้าวโพด</SelectItem>
-                  <SelectItem value="sugarcane">อ้อย</SelectItem>
-                  <SelectItem value="cassava">มันสำปะหลัง</SelectItem>
-                  <SelectItem value="vegetables">ผัก</SelectItem>
-                  <SelectItem value="fruits">ผลไม้</SelectItem>
-                  <SelectItem value="rubber">ยางพารา</SelectItem>
-                  <SelectItem value="palm">ปาล์มน้ำมัน</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormField>
-
-            <FormField label="ประสบการณ์ (Years of Experience)">
-              <Input
-                value={formData.experience}
-                onChange={(e) =>
-                  handleInputChange("experience", e.target.value)
-                }
-                placeholder="5 ปี"
-                className="bayer-input"
-              />
-            </FormField>
           </CardContent>
         </Card>
 
@@ -541,12 +487,12 @@ export default function GrowerRegisterPage() {
             {isLoading ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
-                กำลังบันทึก...
+                saving...
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                บันทึกข้อมูล
+                saved
               </>
             )}
           </Button>

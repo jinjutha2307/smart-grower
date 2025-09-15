@@ -1,12 +1,7 @@
 import FormFieldComponent from "./form-field-component";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
-import {
-  provinces,
-  Province,
-  District,
-  Subdistrict,
-} from "@/constants/thailand-geography";
+import { US_STATES } from "@/constants/us-states";
 import { FormField } from "@/components/ui/form-field";
 import {
   Select,
@@ -15,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { getCities, getZipCodes } from "@/lib/get-address";
 
 type ChildProps = {
   errors: string;
@@ -27,36 +22,67 @@ export default function AddressForm({
   handleInputChange,
   errors,
 }: ChildProps) {
-  const [provinceCode, setProvinceCode] = useState("");
-  const [districtCode, setDistrictCode] = useState("");
-  const [subdistrictCode, setSubdistrictCode] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-
-  const selectedProvince = provinces.find((p) => p.code === provinceCode);
-  const districts = selectedProvince?.districts || [];
-  const selectedDistrict = districts.find((d) => d.code === districtCode);
-  const subdistricts = selectedDistrict?.subdistricts || [];
-  const selectedSubdistrict = subdistricts.find(
-    (s) => s.code === subdistrictCode
-  );
-
-  useEffect(() => {
-    setPostalCode(selectedSubdistrict?.code || "");
-  }, [selectedSubdistrict]);
-
+  const [stateId, setStateId] = useState<string>("");
+  const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
+  const [cityId, setCityId] = useState<string>("");
+  const [zipCodes, setZipCodes] = useState<{ id: string; code: string }[]>([]);
+  const [zipCodeId, setZipCodeId] = useState<string>("");
   const address = {
-    label: "ที่อยู่ (Address)",
+    label: "Address",
     field: "address",
-    placeholder: "123 หมู่ 1 ตำบล..",
+    placeholder: "123 Green Valley Rd.",
     child: (
       <Textarea
         value={formData.address}
         onChange={(e) => handleInputChange("address", e.target.value)}
-        placeholder="123 หมู่ 1 ตำบล..."
+        placeholder="123 Green Valley Rd."
         className="bayer-input"
         rows={3}
       />
     ),
+  };
+
+  const fetchCities = async (stateId: string) => {
+    const data = await getCities(stateId);
+    setCities(data);
+  };
+
+  const fetchZipCodes = async (cityId: string) => {
+    const data = await getZipCodes(cityId);
+    setZipCodes(data);
+  };
+
+  const DropDownComponent = ({
+    label,
+    value,
+    onValueChange,
+    placeholder,
+    items,
+    disabled = false,
+  }: {
+    label: string;
+    value: string;
+    onValueChange: (value: string) => void;
+    placeholder: string;
+    items: { id: string; [subject: string]: string }[];
+    disabled?: boolean;
+  }) => {
+    return (
+      <FormField label={label}>
+        <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+          <SelectTrigger className="bayer-input">
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {items.map((item) => (
+              <SelectItem key={item.id} value={item.id}>
+                {item.name ?? item.code}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormField>
+    );
   };
 
   return (
@@ -68,84 +94,54 @@ export default function AddressForm({
         handleInputChange={handleInputChange}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/*Provinces*/}
-        <FormField label="จังหวัด (Province)">
-          <Select
-            value={provinceCode}
-            onValueChange={(value) => {
-              setProvinceCode(value);
-              setDistrictCode("");
-              setSubdistrictCode("");
-              setPostalCode("");
-              handleInputChange("province", value);
-            }}
-          >
-            <SelectTrigger className="bayer-input">
-              <SelectValue placeholder="เลือกจังหวัด" />
-            </SelectTrigger>
-            <SelectContent>
-              {provinces.map((p) => (
-                <SelectItem key={p.code} value={p.code}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormField>
-        {/*District*/}
-        <FormField label="อำเภอ (District)">
-          <Select
-            value={districtCode}
-            onValueChange={(value) => {
-              setDistrictCode(value);
-              setSubdistrictCode("");
-              setPostalCode("");
-              handleInputChange("district", value);
-            }}
-          >
-            <SelectTrigger className="bayer-input">
-              <SelectValue placeholder="เลือกอำเภอ" />
-            </SelectTrigger>
-            <SelectContent>
-              {districts.map((d) => (
-                <SelectItem key={d.code} value={d.code}>
-                  {d.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormField>
-        {/*Subdistrict*/}
-        <FormField label="ตำบล (Subdistrict)">
-          <Select
-            value={subdistrictCode}
-            onValueChange={(value) => {
-              setSubdistrictCode(value);
-              handleInputChange("subdistrict", value);
-            }}
-          >
-            <SelectTrigger className="bayer-input">
-              <SelectValue placeholder="ในเมือง" />
-            </SelectTrigger>
-            <SelectContent>
-              {subdistricts.map((s) => (
-                <SelectItem key={s.code} value={s.code}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormField>
-        {/*Postal Code*/}
-        <FormField required={false} label="รหัสไปรษณีย์ (Postal Code)">
-          <Input
-            readOnly
-            value={postalCode}
-            onChange={(e) => handleInputChange("postalCode", e.target.value)}
-            placeholder="10100"
-            className="bayer-input"
-          />
-        </FormField>
+        {/*State*/}
+        <DropDownComponent
+          label="State"
+          value={stateId}
+          onValueChange={(value) => {
+            console.log("Satet id:", value);
+            setStateId(value);
+            fetchCities(value);
+            handleInputChange(
+              "state",
+              US_STATES.find((s) => s.id === value)?.name || ""
+            );
+          }}
+          placeholder="State"
+          items={Array.from(US_STATES)}
+        />
+
+        {/*City*/}
+        <DropDownComponent
+          label="City"
+          value={cityId}
+          onValueChange={(value) => {
+            setCityId(value);
+            fetchZipCodes(value);
+            handleInputChange(
+              "city",
+              cities.find((c) => c.id === value)?.name || ""
+            );
+          }}
+          placeholder="City"
+          items={cities}
+          disabled={cities.length === 0}
+        />
+        {/*Zip codes*/}
+        <DropDownComponent
+          label="Zip Code"
+          value={zipCodeId}
+          onValueChange={(value) => {
+            setZipCodeId(value);
+            handleInputChange(
+              "zipCode",
+              zipCodes.find((z) => z.id === value)?.code || ""
+            );
+          }}
+          placeholder="Zip Code"
+          items={zipCodes}
+          disabled={zipCodes.length === 0}
+        />
       </div>
     </>
   );
