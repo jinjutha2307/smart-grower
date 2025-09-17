@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getCities, getZipCodes } from "@/lib/get-address";
+import { getCities, getZipCodes } from "@/lib/api";
 
 type ChildProps = {
   errors: string;
@@ -99,7 +99,6 @@ export default function AddressForm({
           label="State"
           value={stateId}
           onValueChange={(value) => {
-            console.log("Satet id:", value);
             setStateId(value);
             fetchCities(value);
             handleInputChange(
@@ -134,7 +133,7 @@ export default function AddressForm({
           onValueChange={(value) => {
             setZipCodeId(value);
             handleInputChange(
-              "zipCode",
+              "zipcode",
               zipCodes.find((z) => z.id === value)?.code || ""
             );
           }}

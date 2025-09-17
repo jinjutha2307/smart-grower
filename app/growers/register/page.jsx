@@ -37,20 +37,22 @@ import { set } from "date-fns";
 import { se } from "date-fns/locale";
 import FormFieldComponent from "@/components/common/form/form-field-component";
 import AddressForm from "@/components/common/form/address-form";
+import { createGrowersData, uploadPhoto } from "@/lib/api";
 
 export default function GrowerRegisterPage() {
   const [formData, setFormData] = useState({
     growerId: "",
     citizenId: "",
-    firstNameEN: "",
-    lastNameEN: "",
+    firstName: "",
+    lastName: "",
     gender: "",
     citizenIdIssueDate: "",
     citizenIdExpiryDate: "",
     citizenBirthDate: "",
-    age: "0",
+    age: 0,
     phone: "",
     email: "",
+    address: "",
     state: "",
     city: "",
     zipcode: "",
@@ -77,6 +79,7 @@ export default function GrowerRegisterPage() {
 
   const handlePhotoUpload = (event) => {
     const file = event.target.files?.[0];
+
     if (file) {
       // Validate file size (100KB limit)
       if (file.size > 100 * 1024) {
@@ -170,10 +173,12 @@ export default function GrowerRegisterPage() {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const data = await uploadPhoto(formData.photo);
 
-      console.log("Form submitted:", formData);
+      const photoUrl = data.url;
+      const updatedFormData = { ...formData, photo: photoUrl };
+      await createGrowersData(updatedFormData);
+
       setIsSubmitted(true);
 
       // Reset form after successful submission
@@ -181,21 +186,19 @@ export default function GrowerRegisterPage() {
         setFormData({
           growerId: "",
           citizenId: "",
-          firstNameEN: "",
-          lastNameEN: "",
-          addressTH: "",
-          addressEN: "",
+          firstName: "",
+          lastName: "",
           gender: "",
           citizenIdIssueDate: "",
           citizenIdExpiryDate: "",
           citizenBirthDate: "",
-          age: "0",
+          age: 0,
           phone: "",
           email: "",
           address: "",
-          city: "",
           state: "",
-          zipCode: "",
+          city: "",
+          zipcode: "",
           photo: null,
         });
         setPhotoPreview(null);
@@ -245,8 +248,9 @@ export default function GrowerRegisterPage() {
     const age = currentYear - birthYear;
 
     if (isNaN(age) || age < 0) {
-      return "0";
+      return 0;
     }
+
     return age;
   };
 
@@ -261,8 +265,8 @@ export default function GrowerRegisterPage() {
       field: "citizenId",
       placeholder: "1-2345-67890-12-3",
     },
-    { label: "First Name", field: "firstNameEN", placeholder: "Jane" },
-    { label: "Last Name", field: "lastNameEN", placeholder: "Smith" },
+    { label: "First Name", field: "firstName", placeholder: "Jane" },
+    { label: "Last Name", field: "lastName", placeholder: "Smith" },
     {
       label: "Gender",
       field: "gender",
