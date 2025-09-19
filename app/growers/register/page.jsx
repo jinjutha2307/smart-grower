@@ -212,18 +212,6 @@ export default function GrowerRegisterPage() {
     }
   };
 
-  const handleExportExcel = () => {
-    // Simulate Excel export
-    console.log("Exporting to Excel...");
-    // In a real app, you would generate and download an Excel file
-    const link = document.createElement("a");
-    link.href =
-      "data:text/csv;charset=utf-8,Grower ID,Name,Citizen ID,Phone,Email\n" +
-      `${formData.growerId},"${formData.firstName} ${formData.lastName}",${formData.citizenId},${formData.phone},${formData.email}`;
-    link.download = "grower_data.csv";
-    link.click();
-  };
-
   if (isSubmitted) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -473,16 +461,6 @@ export default function GrowerRegisterPage() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleExportExcel}
-            className="bayer-card border-blue-300 text-blue-800 hover:bg-blue-50"
-            disabled={isLoading}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export to Excel
-          </Button>
           <Button
             type="submit"
             disabled={isLoading}

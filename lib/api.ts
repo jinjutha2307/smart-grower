@@ -88,3 +88,39 @@ export async function createGrowersData(formData:FormData) {
 
   return response.json();
 }
+
+
+export type Grower = {
+    growerId: string;
+    firstName: string;
+    lastName: string;
+    gender: string;
+    phone: string;
+    email: string;
+    address: string;
+    state: string;
+    city: string;
+    zipcode: string;
+    photo: string;
+    id: number;
+  };
+
+export async function getGrowersListPage() {
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/growers`, {
+            cache: 'no-store'
+        });
+
+        if(!res.ok){
+            throw new Error('Failed to fetch growers list');
+        }
+
+        return res.json() as Promise<Grower[]>;
+        
+    } catch (error) {
+        console.error("Error fetching growers list:", error);
+        return [];
+        
+    }
+    
+}
