@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,18 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import {
   Upload,
   Save,
-  Download,
   User,
   Camera,
   AlertCircle,
@@ -30,17 +22,34 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { FormField } from "@/components/ui/form-field";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { set } from "date-fns";
-import { se } from "date-fns/locale";
 import FormFieldComponent from "@/components/common/form/form-field-component";
 import AddressForm from "@/components/common/form/address-form";
 import { createGrowersData, uploadPhoto } from "@/lib/api";
+import { GrowersFormData } from "@/types";
+import UserAvatar from "@/components/ui/user-avatar";
 
-export default function GrowerRegisterPage() {
-  const [formData, setFormData] = useState({
+interface ErrorState {
+  [key: string]: string | undefined;
+}
+
+interface PersonalDataField {
+  label: string;
+  field: keyof GrowersFormData;
+  placeholder?: string;
+  value: string | number | null;
+  child?: React.ReactNode;
+}
+
+export default function GrowerRegisterPage({
+  growerData,
+  disabled,
+}: {
+  growerData?: GrowersFormData | null;
+  disabled?: boolean;
+}) {
+  const [formData, setFormData] = useState<GrowersFormData>({
     growerId: "",
     citizenId: "",
     firstName: "",
@@ -55,16 +64,29 @@ export default function GrowerRegisterPage() {
     address: "",
     state: "",
     city: "",
-    zipcode: "",
+    zipCode: "",
     photo: null,
   });
 
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  useEffect(() => {
+    if (growerData) {
+      setFormData(growerData);
+    }
+  }, [growerData]);
 
-  const handleInputChange = (field, value) => {
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (growerData) {
+      setPhotoPreview(`${process.env.NEXT_PUBLIC_API_URL}${growerData.photo}`);
+    }
+  }, [growerData]);
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errors, setErrors] = useState<ErrorState>({});
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+
+  const handleInputChange = (field: string, value: any) => {
     if (field === "citizenBirthDate" && value != "") {
       setFormData((prev) => ({ ...prev, age: ageCalcuate(value) }));
     }
@@ -72,26 +94,22 @@ export default function GrowerRegisterPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     if (errors[field]) {
-      // Clear error when user starts typing
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  const handlePhotoUpload = (event) => {
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (file) {
-      // Validate file size (100KB limit)
       if (file.size > 100 * 1024) {
         setErrors((prev) => ({
           ...prev,
           photo: "File size must be less than 100KB",
         }));
-
         return;
       }
 
-      // Validate file type
       if (
         !file.type.startsWith("image/webp") &&
         !file.type.startsWith("image/jpeg") &&
@@ -101,7 +119,6 @@ export default function GrowerRegisterPage() {
           ...prev,
           photo: "Please select a valid image file",
         }));
-
         return;
       }
 
@@ -110,18 +127,17 @@ export default function GrowerRegisterPage() {
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPhotoPreview(e.target?.result);
+        setPhotoPreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: ErrorState = {};
 
     Object.keys(formData).forEach((field) => {
       if (field === "citizenId" || field === "email" || field === "phone") {
-        // Validate thai citizen ID format
         if (field === "citizenId") {
           if (formData.citizenId.length > 13) {
             newErrors.citizenId = "Citizen ID must be 13 digits";
@@ -134,7 +150,6 @@ export default function GrowerRegisterPage() {
           }
         }
 
-        // Validate email format
         if (field === "email") {
           if (
             formData.email &&
@@ -144,7 +159,6 @@ export default function GrowerRegisterPage() {
           }
         }
 
-        // Validate phone format
         if (field === "phone") {
           if (formData.phone.length > 10) {
             newErrors.phone = "Phone number must be 10 digits";
@@ -153,7 +167,10 @@ export default function GrowerRegisterPage() {
           }
         }
       } else {
-        if (typeof formData[field] === "string" && !formData[field].trim()) {
+        if (
+          typeof formData[field as keyof GrowersFormData] === "string" &&
+          !(formData[field as keyof GrowersFormData] as string).trim()
+        ) {
           newErrors[field] = `${field} is required`;
         }
       }
@@ -163,7 +180,7 @@ export default function GrowerRegisterPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -173,15 +190,16 @@ export default function GrowerRegisterPage() {
     setIsLoading(true);
 
     try {
-      const data = await uploadPhoto(formData.photo);
-
-      const photoUrl = data.url;
-      const updatedFormData = { ...formData, photo: photoUrl };
+      let photoUrl = "";
+      if (formData.photo && formData.photo instanceof File) {
+        const data = await uploadPhoto(formData.photo);
+        photoUrl = data.url;
+      }
+      const updatedFormData: GrowersFormData = { ...formData, photo: photoUrl };
       await createGrowersData(updatedFormData);
 
       setIsSubmitted(true);
 
-      // Reset form after successful submission
       setTimeout(() => {
         setFormData({
           growerId: "",
@@ -198,7 +216,7 @@ export default function GrowerRegisterPage() {
           address: "",
           state: "",
           city: "",
-          zipcode: "",
+          zipCode: "",
           photo: null,
         });
         setPhotoPreview(null);
@@ -229,9 +247,8 @@ export default function GrowerRegisterPage() {
     );
   }
 
-  const ageCalcuate = (birthDate) => {
+  const ageCalcuate = (birthDate: string) => {
     const birthYear = new Date(birthDate).getFullYear();
-
     const currentYear = new Date().getFullYear();
     const age = currentYear - birthYear;
 
@@ -242,34 +259,47 @@ export default function GrowerRegisterPage() {
     return age;
   };
 
-  const personalDataFields = [
+  const personalDataFields: PersonalDataField[] = [
     {
       label: "Grower ID",
       field: "growerId",
+      value: formData.growerId.toUpperCase(),
       placeholder: "GR001",
     },
     {
       label: "Citizen ID",
       field: "citizenId",
+      value: formData.citizenId,
       placeholder: "1-2345-67890-12-3",
     },
-    { label: "First Name", field: "firstName", placeholder: "Jane" },
-    { label: "Last Name", field: "lastName", placeholder: "Smith" },
+    {
+      label: "First Name",
+      field: "firstName",
+      value: formData.firstName,
+      placeholder: "Jane",
+    },
+    {
+      label: "Last Name",
+      field: "lastName",
+      value: formData.lastName,
+      placeholder: "Smith",
+    },
     {
       label: "Gender",
       field: "gender",
+      value: formData.gender,
       child: (
         <RadioGroup
           className="flex items-center space-x-3 "
-          defaultValue={formData["gender"]}
-          onValueChange={(value) => handleInputChange("gender", value)}
+          value={formData.gender}
+          onValueChange={(value: string) => handleInputChange("gender", value)}
         >
           <div className="flex items-center space-x-1 cursor-pointer">
             <RadioGroupItem value="male" id="male" />
             <Label htmlFor="male">Male</Label>
           </div>
           <div className="flex items-center space-x-1 cursor-pointer">
-            <RadioGroupItem value="Female" id="female" />
+            <RadioGroupItem value="female" id="female" />
             <Label htmlFor="female">Female</Label>
           </div>
           <div className="flex items-center space-x-1 cursor-pointer">
@@ -282,11 +312,12 @@ export default function GrowerRegisterPage() {
     {
       label: "Citizen Birth Date",
       field: "citizenBirthDate",
+      value: formData.citizenBirthDate,
       child: (
         <Input
           type="date"
           value={formData.citizenBirthDate}
-          onChange={(e) =>
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             handleInputChange("citizenBirthDate", e.target.value)
           }
           className="bayer-input"
@@ -296,16 +327,18 @@ export default function GrowerRegisterPage() {
     {
       label: "Age",
       field: "age",
+      value: formData.age,
       child: <div className="text- text-black md:text-sm">{formData.age}</div>,
     },
     {
       label: "Citizen ID Issue Date",
       field: "citizenIdIssueDate",
+      value: formData.citizenIdIssueDate,
       child: (
         <Input
           type="date"
           value={formData.citizenIdIssueDate}
-          onChange={(e) =>
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             handleInputChange("citizenIdIssueDate", e.target.value)
           }
           className="bayer-input"
@@ -315,11 +348,12 @@ export default function GrowerRegisterPage() {
     {
       label: "Citizen ID Expiry Date",
       field: "citizenIdExpiryDate",
+      value: formData.citizenIdExpiryDate,
       child: (
         <Input
           type="date"
           value={formData.citizenIdExpiryDate}
-          onChange={(e) =>
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             handleInputChange("citizenIdExpiryDate", e.target.value)
           }
           className="bayer-input"
@@ -329,11 +363,13 @@ export default function GrowerRegisterPage() {
     {
       label: "Phone",
       field: "phone",
+      value: formData.phone,
       placeholder: "xxx-xxx-xxxx",
     },
     {
       label: "Email",
       field: "email",
+      value: formData.email,
       placeholder: "jennie@example.com",
     },
   ];
@@ -373,7 +409,7 @@ export default function GrowerRegisterPage() {
               <div className="relative">
                 <div className="h-32 w-32 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-green-400 transition-colors">
                   {photoPreview ? (
-                    <img
+                    <UserAvatar
                       src={photoPreview || "/placeholder.svg"}
                       alt="Grower photo"
                       className="h-full w-full object-cover"
@@ -424,9 +460,10 @@ export default function GrowerRegisterPage() {
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {personalDataFields.map((item) => (
               <FormFieldComponent
+                key={item.field}
                 item={item}
                 errors={errors}
-                formData={formData}
+                value={item.value}
                 handleInputChange={handleInputChange}
               />
             ))}

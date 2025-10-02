@@ -22,18 +22,23 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
-import { getGrowersListPage, Grower } from "@/lib/api";
-import { Avatar } from "@/components/ui/avatar";
+
+import { getAllGrowers } from "@/lib/api";
+import { GrowersDataResponse } from "@/types";
+
+import UserAvatar from "@/components/ui/user-avatar";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function GrowersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [growers, setGrowers] = useState<Grower[]>([]);
-
+  const [growers, setGrowers] = useState<GrowersDataResponse[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   async function getGrowersList() {
-    const res: Grower[] = await getGrowersListPage();
+    setIsLoading(true);
+    const res: GrowersDataResponse[] = await getAllGrowers();
     setGrowers(res);
+    setIsLoading(false);
   }
 
   useEffect(() => {
@@ -87,7 +92,11 @@ export default function GrowersPage() {
     "Actions",
   ];
 
-  return (
+  return isLoading ? (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <LoadingSpinner size="lg" />
+    </div>
+  ) : (
     <div className="space-y-6">
       {/* Header */}
       <div className="bayer-card rounded-2xl p-6">
@@ -98,7 +107,7 @@ export default function GrowersPage() {
             </h1>
             <p className="text-blue-700">
               {/* จัดการข้อมูลเกษตรกรทั้งหมดในระบบ ({filteredGrowers.length} รายการ) */}
-              จัดการข้อมูลเกษตรกรทั้งหมดในระบบ ({growers.length} รายการ)
+              Manage all growers in the system ({growers.length} items)
             </p>
           </div>
           <Link href="/growers/register">
@@ -147,82 +156,88 @@ export default function GrowersPage() {
         </CardContent>
       </Card>
 
-      <div className="w-full overflow-y-scroll overflow-x-hidden rounded-lg border border-stone-200 backdrop-blur-lg shadow-xl ">
-        <table className="w-full">
-          <thead className="border-b border-stone-200 bayer-gradient text-sm font-medium text-stone-200 dark:bg-surface-dark">
-            <tr>
-              {tableHeaders.map((header) => (
-                <th className="px-2.5 py-2 text-start font-medium">{header}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="group text-sm text-stone-800 dark:text-white">
-            {growers.map((grower) => (
-              <tr className="even:bg-stone-200 border-b border-stone-200 last:border-0">
-                <td className="p-3">{grower.growerId}</td>
-                <td className="relative inline-flex w-max items-center border rounded-full text-sm p-0.5 shadow-sm  border-stone-300">
-                  <span className="grid place-items-start shrink-0 rounded-full translate-x-1 w-5 h-5">
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_API_URL}${grower.photo}`}
-                      alt={`${grower.firstName}'s profile photo`}
-                      className="inline-block object-cover object-center rounded-full w-5 h-5"
-                    />
-                  </span>
-                  <span className="text-current leading-none my-1 mx-2.5">
-                    {grower.firstName} {grower.lastName}
-                  </span>
-                </td>
-                <td className="p-3">{grower.gender}</td>
-                <td className="p-3">{grower.phone}</td>
-                <td className="p-3">{grower.email}</td>
-                <td className="p-3">
-                  {grower.address}, {grower.city}, {grower.state}{" "}
-                  {grower.zipcode}
-                </td>
-                <td className="flex gap-2 pr-3">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-0.5 bayer-card border-green-200 text-green-700 hover:text-blue-700 hover:bg-green-50 transition-all"
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-0.5 bayer-card border-red-200 text-red-700 hover:text-rose-500 hover:bg-red-50 transition-all"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Empty State */}
-      {growers.length === 0 && (
+      {growers.length === 0 ? (
         <Card className="bayer-card border-white/30">
           <CardContent className="text-center py-12">
             <div className="text-gray-400 mb-4">
               <Users className="h-12 w-12 mx-auto" />
             </div>
             <h3 className="text-lg font-semibold text-gray-600 mb-2">
-              ไม่พบข้อมูลเกษตรกร
+              No growers found
             </h3>
             <p className="text-gray-500 mb-4">
-              {searchTerm ? "ลองเปลี่ยนคำค้นหา" : "ยังไม่มีเกษตรกรในระบบ"}{" "}
-              หรือเพิ่มเกษตรกรใหม่
+              {searchTerm
+                ? "Try changing the search term"
+                : "No growers found in the system"}{" "}
+              Register a new grower to get started.
             </p>
             <Link href="/growers/register">
               <Button className="bayer-green-gradient hover:from-green-600 hover:to-green-700 text-white">
                 <Plus className="h-4 w-4 mr-2" />
-                เพิ่มเกษตรกรใหม่
+                Register New Grower
               </Button>
             </Link>
           </CardContent>
         </Card>
+      ) : (
+        <div className="w-full h-screen overflow-y-scroll overflow-x-hidden rounded-lg border border-stone-200 backdrop-blur-lg shadow-xl ">
+          <table className="w-full">
+            <thead className="sticky top-0 z-10 border-b border-stone-200 bayer-gradient text-sm font-medium text-stone-200 dark:bg-surface-dark">
+              <tr>
+                {tableHeaders.map((header) => (
+                  <th className="px-2.5 py-2 text-start font-medium">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="group text-sm text-stone-800 dark:text-white">
+              {growers.map((grower) => (
+                <tr className="even:bg-stone-200 border-b border-stone-200 last:border-0">
+                  <td className="p-3">{grower.growerId}</td>
+                  <td className="relative inline-flex w-max items-center border rounded-full text-sm p-0.5 shadow-sm  border-stone-300">
+                    <span className="grid place-items-start shrink-0 rounded-full translate-x-1 w-5 h-5">
+                      <UserAvatar
+                        src={`${process.env.NEXT_PUBLIC_API_URL}${grower.photo}`}
+                        alt={`${grower.firstName}'s profile photo`}
+                        size={5}
+                        className="inline-block object-cover object-center rounded-full w-5 h-5"
+                      />
+                    </span>
+                    <span className="text-current leading-none my-1 mx-2.5">
+                      {grower.firstName} {grower.lastName}
+                    </span>
+                  </td>
+                  <td className="p-3">{grower.gender}</td>
+                  <td className="p-3">{grower.phone}</td>
+                  <td className="p-3">{grower.email}</td>
+                  <td className="p-3">
+                    {grower.address}, {grower.city}, {grower.state}{" "}
+                    {grower.zipCode}
+                  </td>
+                  <td className="flex gap-2 pr-3">
+                    <Link href={`/growers/edit/${grower.growerId}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-0.5 bayer-card border-green-200 text-green-700 hover:text-blue-700 hover:bg-green-50 transition-all"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                      </Button>
+                    </Link>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-0.5 bayer-card border-red-200 text-red-700 hover:text-rose-500 hover:bg-red-50 transition-all"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* Summary Stats */}

@@ -1,6 +1,6 @@
 import FormFieldComponent from "./form-field-component";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { US_STATES } from "@/constants/us-states";
 import { FormField } from "@/components/ui/form-field";
 import {
@@ -11,12 +11,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getCities, getZipCodes } from "@/lib/api";
+import { GrowersFormData } from "@/types";
 
-type ChildProps = {
-  errors: string;
-  formData: any;
+interface ChildProps {
+  errors: { [key: string]: string | undefined };
+  formData: GrowersFormData;
   handleInputChange: (field: string, value: string) => void;
-};
+}
 export default function AddressForm({
   formData,
   handleInputChange,
@@ -30,6 +31,7 @@ export default function AddressForm({
   const address = {
     label: "Address",
     field: "address",
+    value: formData.address,
     placeholder: "123 Green Valley Rd.",
     child: (
       <Textarea
@@ -90,7 +92,7 @@ export default function AddressForm({
       <FormFieldComponent
         item={address}
         errors={errors}
-        formData={formData}
+        value={address.value}
         handleInputChange={handleInputChange}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -106,7 +108,7 @@ export default function AddressForm({
               US_STATES.find((s) => s.id === value)?.name || ""
             );
           }}
-          placeholder="State"
+          placeholder={formData.state || "State"}
           items={Array.from(US_STATES)}
         />
 
@@ -122,7 +124,7 @@ export default function AddressForm({
               cities.find((c) => c.id === value)?.name || ""
             );
           }}
-          placeholder="City"
+          placeholder={formData.city || "City"}
           items={cities}
           disabled={cities.length === 0}
         />
@@ -133,11 +135,11 @@ export default function AddressForm({
           onValueChange={(value) => {
             setZipCodeId(value);
             handleInputChange(
-              "zipcode",
+              "zipCode",
               zipCodes.find((z) => z.id === value)?.code || ""
             );
           }}
-          placeholder="Zip Code"
+          placeholder={formData.zipCode || "Zip Code"}
           items={zipCodes}
           disabled={zipCodes.length === 0}
         />

@@ -2,11 +2,19 @@
 import React from "react";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
+import { GrowersFormData } from "@/types";
+
+type ItemType = {
+  label: string;
+  field: string;
+  placeholder?: string;
+  child?: React.ReactNode;
+};
 
 type ChildProps = {
-  item: any;
-  errors?: string;
-  formData: any;
+  item: ItemType;
+  errors: { [key: string]: string | undefined };
+  value: string | number | null;
   required?: boolean;
   handleInputChange: (field: string, value: string) => void;
 };
@@ -14,7 +22,7 @@ type ChildProps = {
 export default function FormFieldComponent({
   item,
   errors,
-  formData,
+  value,
   required,
   handleInputChange,
 }: ChildProps) {
@@ -29,7 +37,7 @@ export default function FormFieldComponent({
         item.child
       ) : (
         <Input
-          value={formData[item.field]}
+          value={value ?? ""}
           onChange={(e) => handleInputChange(item.field, e.target.value)}
           placeholder={item.placeholder}
           className="bayer-input"

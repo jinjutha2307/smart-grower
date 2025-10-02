@@ -1,3 +1,4 @@
+import { GrowersFormData, GrowersDataResponse } from "@/types";
 export async function getCities(stateId: string){
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/locations/states/${stateId}/cities`, {
@@ -25,13 +26,13 @@ try {
         });
 
         if(!res.ok){
-            throw new Error('Failed to fetch zipcodes');
+            throw new Error('Failed to fetch zip codes');
         }
 
         return res.json() as Promise<{id: string, code:string}[]>;
         
     } catch (error) {
-        console.error("Error fetching zipcodes:", error);
+        console.error("Error fetching zip codes:", error);
         return [];
         
     }
@@ -54,32 +55,15 @@ export async function uploadPhoto(photo:File) {
 }
 
 
-type FormData = {
-  growerId: string;
-  citizenId: string;
-  firstName: string;
-  lastName: string;
-  gender: string;
-  citizenIdIssueDate: string;
-  citizenIdExpiryDate: string;
-  citizenBirthDate: string;
-  age: number;
-  phone: string;
-  email: string;
-  address: string;
-  state: string;
-  city: string;
-  zipcode: string;
-  photo: File; 
-};
 
-export async function createGrowersData(formData:FormData) {
+
+export async function createGrowersData(formData:GrowersFormData) {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/growers/create`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json", // tells server it’s JSON
+      "Content-Type": "application/json", 
     },
-    body: JSON.stringify(formData), // convert object → JSON string
+    body: JSON.stringify(formData), 
   });
   
   if (!response.ok) {
@@ -90,22 +74,9 @@ export async function createGrowersData(formData:FormData) {
 }
 
 
-export type Grower = {
-    growerId: string;
-    firstName: string;
-    lastName: string;
-    gender: string;
-    phone: string;
-    email: string;
-    address: string;
-    state: string;
-    city: string;
-    zipcode: string;
-    photo: string;
-    id: number;
-  };
 
-export async function getGrowersListPage() {
+
+export async function getAllGrowers() {
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/growers`, {
             cache: 'no-store'
@@ -115,12 +86,30 @@ export async function getGrowersListPage() {
             throw new Error('Failed to fetch growers list');
         }
 
-        return res.json() as Promise<Grower[]>;
+        return res.json() as Promise<GrowersDataResponse[]>;
         
     } catch (error) {
         console.error("Error fetching growers list:", error);
         return [];
         
+    }
+    
+}
+
+export async function getGrowerById(growerId: string) {
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/growers/${growerId}`, {
+            cache: 'no-store'
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch grower');
+        }
+
+        return res.json() as Promise<GrowersFormData>;
+    } catch (error) {
+        console.error(`Error fetching grower id ${growerId}:`, error);
+        return null;
     }
     
 }
